@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -26,6 +27,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.min
 import androidx.compose.ui.unit.sp
 import net.nicochristmann.p2pgames.game.TicTacToeGame
 import net.nicochristmann.p2pgames.game.TttUiState
@@ -62,18 +64,19 @@ fun TicTacToeScreen(
     ) {
         if (maxWidth > maxHeight) {
             // Landscape: board on the left, info and buttons on the right.
+            // The board side is computed explicitly from the measured screen
+            // size so it can never exceed the height or crowd out the panel.
+            val boardSide = min(maxHeight, maxWidth - 244.dp).coerceAtLeast(100.dp)
             Row(
                 modifier = Modifier.fillMaxSize(),
                 horizontalArrangement = Arrangement.spacedBy(24.dp),
+                verticalAlignment = Alignment.CenterVertically,
             ) {
                 Board(
                     state = state,
                     myTurn = myTurn,
                     onCell = onCell,
-                    modifier = Modifier
-                        .fillMaxHeight()
-                        .aspectRatio(1f, matchHeightConstraintsFirst = true)
-                        .align(Alignment.CenterVertically),
+                    modifier = Modifier.size(boardSide),
                 )
                 Column(
                     modifier = Modifier
