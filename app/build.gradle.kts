@@ -26,9 +26,13 @@ android {
         signingConfigs {
             create("release") {
                 storeFile = file(keystorePath)
-                storePassword = System.getenv("KEYSTORE_PASSWORD")
-                keyAlias = System.getenv("KEY_ALIAS")
-                keyPassword = System.getenv("KEY_PASSWORD")
+                val storePass = System.getenv("KEYSTORE_PASSWORD")
+                storePassword = storePass
+                keyAlias = System.getenv("KEY_ALIAS")?.ifBlank { null } ?: "upload"
+                // keytool defaults the key password to the keystore password
+                // (PKCS12 keystores always share it), so fall back to that
+                // when no separate KEY_PASSWORD is configured.
+                keyPassword = System.getenv("KEY_PASSWORD")?.ifBlank { null } ?: storePass
             }
         }
     }

@@ -120,8 +120,8 @@ One-time setup:
    |--------|-------|
    | `KEYSTORE_BASE64` | `base64 -w0 upload-keystore.jks` output |
    | `KEYSTORE_PASSWORD` | the keystore password |
-   | `KEY_ALIAS` | `upload` (or whatever alias you chose) |
-   | `KEY_PASSWORD` | the key password |
+   | `KEY_ALIAS` | optional — defaults to `upload` |
+   | `KEY_PASSWORD` | optional — defaults to `KEYSTORE_PASSWORD` (that's also what pressing Enter at keytool's key-password prompt means, and PKCS12 keystores always share it) |
 
 3. **Create the app** in the [Play Console](https://play.google.com/console),
    enroll in Play App Signing, and upload the `app-release.aab` artifact from
