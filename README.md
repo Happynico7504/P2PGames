@@ -11,10 +11,10 @@ Everything runs phone-to-phone.
 |------|---------|----------------|
 | Tic-Tac-Toe | 2 | Host plays X, first joiner plays O; everyone else spectates live. |
 | Hangman | 2+ | Host types a secret word (and sits out) **or** picks a random word so everyone guesses. Correct guess keeps the turn; 6 wrong guesses lose the round. |
-| Ludo (Mensch ärgere dich nicht) | 2–4 | 40-field board, 4 tokens each. 6 = bring a token in / extra roll, three tries when everything is in the base, captures send tokens home. Finished players take podium places; the game runs until only one player remains and shows the final ranking. |
-| Uno | 2–8 | Full 108-card deck with skip, reverse, +2, wild and +4. A drawn card may be played immediately or kept. First empty hand wins. |
+| Ludo | 2–4 | 40-field board, 4 tokens each. 6 = bring a token in / extra roll, three tries when everything is in the base, captures send tokens home. Finished players take podium places; the game runs until only one player remains and shows the final ranking. |
+| Wild Cards | 2–8 | Uno-style shedding game: full 108-card deck with skip, reverse, +2, wild and +4. A drawn card may be played immediately or kept. First empty hand wins. |
 | Goose Race | 2–8 | The classic 63-field goose game: geese hop again; bridge, inn, well, maze, prison and death do what they always did. Field 63 must be hit exactly (overshoot bounces back). |
-| Kniffel | 2–8 | 13 categories, up to three rolls with holds, 35-point bonus at 63+ in the upper section. Highest total wins. |
+| Five Dice | 2–8 | Yahtzee-style dice game: 13 categories, up to three rolls with holds, 35-point bonus at 63+ in the upper section. Highest total wins. |
 | Sea Battle | 2 | 10×10 grids, fleet 5-4-3-3-2 placed randomly (reshuffle until happy). A hit grants another shot; sink the whole fleet to win. |
 
 Extra players beyond a game's limit join as live spectators, and late joiners
@@ -39,7 +39,7 @@ are synced into the running game.
    host is **authoritative**: clients only send inputs (`hello`, `input`);
    the host validates every input against the rules engine and then sends
    **each device its own view** of the resulting state. That per-player view
-   is what keeps hidden information hidden — Uno hands and Sea Battle fleets
+   is what keeps hidden information hidden — Wild Cards hands and Sea Battle fleets
    never leave the host except to their owner.
 
 ### Code map
@@ -130,10 +130,10 @@ One-time setup:
 Per release afterwards: push to `main` (or trigger the workflow manually),
 download `app-release-aab` from the run, upload it to a release track.
 
-> **Naming note:** "UNO" and "Kniffel" are trademarks of their respective
-> owners. For a public Play Store listing, rename those games in the UI
-> (e.g. "Crazy Cards" and "Dice Poker") and avoid trademarked names in the
-> store listing itself.
+> **Naming note:** the in-app game names are deliberately trademark-free
+> ("Wild Cards", "Five Dice", "Sea Battle", …). Keep it that way in the
+> store listing too; the comparisons to well-known games in this README are
+> descriptions, not names used in the app.
 
 ## Running it
 

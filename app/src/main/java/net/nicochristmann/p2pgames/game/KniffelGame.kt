@@ -39,7 +39,7 @@ object KniffelCategories {
         FULL_HOUSE -> "Full house"
         SMALL_STRAIGHT -> "Small straight"
         LARGE_STRAIGHT -> "Large straight"
-        KNIFFEL -> "Kniffel"
+        KNIFFEL -> "Five Dice!"
         CHANCE -> "Chance"
         else -> category
     }

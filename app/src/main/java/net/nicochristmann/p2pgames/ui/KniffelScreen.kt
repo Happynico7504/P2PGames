@@ -233,7 +233,7 @@ fun KniffelScreen(
                         .fillMaxWidth(),
                     horizontalAlignment = Alignment.CenterHorizontally,
                 ) {
-                    Text("Kniffel", style = MaterialTheme.typography.headlineSmall)
+                    Text("Five Dice", style = MaterialTheme.typography.headlineSmall)
                     Spacer(Modifier.height(8.dp))
                     dicePanel()
                     Spacer(Modifier.height(16.dp))

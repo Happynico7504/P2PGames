@@ -261,7 +261,7 @@ fun UnoScreen(
                         .fillMaxWidth(),
                     horizontalAlignment = Alignment.CenterHorizontally,
                 ) {
-                    Text("Uno", style = MaterialTheme.typography.headlineSmall)
+                    Text("Wild Cards", style = MaterialTheme.typography.headlineSmall)
                     Spacer(Modifier.height(8.dp))
                     seatsRow()
                     Spacer(Modifier.height(16.dp))

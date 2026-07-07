@@ -5,7 +5,7 @@ import org.json.JSONArray
 import org.json.JSONObject
 
 /**
- * Host-side rules engine for Ludo ("Mensch ärgere dich nicht"), 2–4 players.
+ * Host-side rules engine for a Ludo-style cross-board race, 2–4 players.
  *
  * - 40-field track; each player has 4 tokens, a start field at seat*10 and a
  *   4-field goal lane reached after a full lap.

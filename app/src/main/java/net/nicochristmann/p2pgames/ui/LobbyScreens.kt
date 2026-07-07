@@ -50,9 +50,9 @@ private val gameOptions = listOf(
     GameOption(Msg.GAME_TTT, "Tic-Tac-Toe", "2 play, extras watch", 2),
     GameOption(Msg.GAME_HANGMAN, "Hangman", "2+ players", 2),
     GameOption(Msg.GAME_LUDO, "Ludo", "2–4 players", 2),
-    GameOption(Msg.GAME_UNO, "Uno", "2–8 players", 2),
+    GameOption(Msg.GAME_UNO, "Wild Cards", "2–8 players", 2),
     GameOption(Msg.GAME_GOOSE, "Goose Race", "2–8 players", 2),
-    GameOption(Msg.GAME_KNIFFEL, "Kniffel", "2–8 players", 2),
+    GameOption(Msg.GAME_KNIFFEL, "Five Dice", "2–8 players", 2),
     GameOption(Msg.GAME_BATTLESHIP, "Sea Battle", "2 play, extras watch", 2),
 )
 
