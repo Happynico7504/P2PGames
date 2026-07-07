@@ -1,4 +1,4 @@
-# WiFi Direct Games
+# P2PGames
 
 An Android app for playing local multiplayer games over **Wi-Fi Direct** — no
 router, hotspot, or internet connection needed. One player hosts a session,
