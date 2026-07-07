@@ -12,8 +12,25 @@ android {
         applicationId = "net.nicochristmann.p2pgames"
         minSdk = 24
         targetSdk = 34
-        versionCode = 2
+        // On CI the run number is used, so every build that could go to the
+        // Play Store has a strictly increasing versionCode automatically.
+        versionCode = System.getenv("GITHUB_RUN_NUMBER")?.toIntOrNull() ?: 2
         versionName = "1.1"
+    }
+
+    // Release signing comes from the environment (see .github/workflows/
+    // android.yml and README "Releasing to the Play Store"). Without a
+    // keystore the release bundle is built unsigned.
+    val keystorePath = System.getenv("KEYSTORE_FILE")
+    if (keystorePath != null && file(keystorePath).exists()) {
+        signingConfigs {
+            create("release") {
+                storeFile = file(keystorePath)
+                storePassword = System.getenv("KEYSTORE_PASSWORD")
+                keyAlias = System.getenv("KEY_ALIAS")
+                keyPassword = System.getenv("KEY_PASSWORD")
+            }
+        }
     }
 
     buildTypes {
@@ -23,6 +40,7 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
+            signingConfig = signingConfigs.findByName("release")
         }
     }
     compileOptions {
