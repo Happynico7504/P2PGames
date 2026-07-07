@@ -2,18 +2,20 @@ package net.nicochristmann.p2pgames.ui
 
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
@@ -47,73 +49,119 @@ fun HangmanScreen(
     val iAmSetter = state.setterId == myPlayerId
     val myTurn = playing && !iAmSetter && state.turn == myPlayerId
 
-    Column(
+    val banner = when {
+        state.status == HangmanGame.STATUS_WON && state.winner == myPlayerId ->
+            "You guessed it! 🎉"
+        state.status == HangmanGame.STATUS_WON ->
+            "${nameOf(state.winner)} guessed the word!"
+        state.status == HangmanGame.STATUS_LOST ->
+            "Out of guesses — the word wins this time."
+        iAmSetter -> "Your word — ${nameOf(state.turn)} is guessing"
+        myTurn -> "Your turn — pick a letter"
+        else -> "Waiting for ${nameOf(state.turn)}…"
+    }
+
+    BoxWithConstraints(
         modifier = Modifier
             .fillMaxSize()
-            .verticalScroll(rememberScrollState())
-            .padding(24.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
+            .padding(16.dp),
     ) {
-        Text("Hangman", style = MaterialTheme.typography.headlineSmall)
-        Spacer(Modifier.height(8.dp))
-
-        val banner = when {
-            state.status == HangmanGame.STATUS_WON && state.winner == myPlayerId ->
-                "You guessed it! 🎉"
-            state.status == HangmanGame.STATUS_WON ->
-                "${nameOf(state.winner)} guessed the word!"
-            state.status == HangmanGame.STATUS_LOST ->
-                "Out of guesses — the word wins this time."
-            iAmSetter -> "Your word — ${nameOf(state.turn)} is guessing"
-            myTurn -> "Your turn — pick a letter"
-            else -> "Waiting for ${nameOf(state.turn)}…"
-        }
-        Text(banner, style = MaterialTheme.typography.titleMedium, textAlign = TextAlign.Center)
-        Spacer(Modifier.height(16.dp))
-
-        Gallows(wrongCount = state.wrongCount)
-        Spacer(Modifier.height(16.dp))
-
-        // The masked word, e.g. "_ a _ a _ y"
-        Text(
-            state.masked.toCharArray().joinToString(" ") { it.uppercase() },
-            fontSize = 28.sp,
-            fontWeight = FontWeight.Bold,
-            fontFamily = FontFamily.Monospace,
-            textAlign = TextAlign.Center,
-        )
-        Spacer(Modifier.height(8.dp))
-        Text(
-            "Wrong guesses (${state.wrongCount}/${state.maxWrong}): " +
-                state.wrongLetters.toCharArray().joinToString(" ") { it.uppercase() },
-            style = MaterialTheme.typography.bodyMedium,
-        )
-        Spacer(Modifier.height(16.dp))
-
-        LetterKeyboard(
-            enabled = myTurn,
-            isGuessed = state::isGuessed,
-            onGuess = onGuess,
-        )
-
-        Spacer(Modifier.height(16.dp))
-        if (isHost && !playing) {
-            Button(onClick = onBackToLobby, modifier = Modifier.fillMaxWidth()) {
-                Text("Back to lobby")
+        if (maxWidth > maxHeight) {
+            // Landscape: drawing and word on the left, keyboard and
+            // controls on the right; both panes scroll independently.
+            Row(
+                modifier = Modifier.fillMaxSize(),
+                horizontalArrangement = Arrangement.spacedBy(24.dp),
+            ) {
+                Column(
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxHeight()
+                        .verticalScroll(rememberScrollState()),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center,
+                ) {
+                    WordPanel(state = state, banner = banner)
+                }
+                Column(
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxHeight()
+                        .verticalScroll(rememberScrollState()),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center,
+                ) {
+                    LetterKeyboard(
+                        enabled = myTurn,
+                        isGuessed = state::isGuessed,
+                        onGuess = onGuess,
+                    )
+                    Spacer(Modifier.height(16.dp))
+                    GameActionButtons(
+                        isHost = isHost,
+                        playing = playing,
+                        onBackToLobby = onBackToLobby,
+                        onLeave = onLeave,
+                    )
+                }
             }
-            Spacer(Modifier.height(8.dp))
-        }
-        if (!isHost && !playing) {
-            Text(
-                "Waiting for the host to return to the lobby…",
-                style = MaterialTheme.typography.bodyMedium,
-            )
-            Spacer(Modifier.height(8.dp))
-        }
-        OutlinedButton(onClick = onLeave, modifier = Modifier.fillMaxWidth()) {
-            Text(if (isHost) "Close session" else "Leave session")
+        } else {
+            // Portrait: single scrollable column, width-capped on tablets.
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .verticalScroll(rememberScrollState()),
+                horizontalAlignment = Alignment.CenterHorizontally,
+            ) {
+                Column(
+                    modifier = Modifier
+                        .widthIn(max = 480.dp)
+                        .fillMaxWidth(),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                ) {
+                    Text("Hangman", style = MaterialTheme.typography.headlineSmall)
+                    Spacer(Modifier.height(8.dp))
+                    WordPanel(state = state, banner = banner)
+                    Spacer(Modifier.height(16.dp))
+                    LetterKeyboard(
+                        enabled = myTurn,
+                        isGuessed = state::isGuessed,
+                        onGuess = onGuess,
+                    )
+                    Spacer(Modifier.height(16.dp))
+                    GameActionButtons(
+                        isHost = isHost,
+                        playing = playing,
+                        onBackToLobby = onBackToLobby,
+                        onLeave = onLeave,
+                    )
+                }
+            }
         }
     }
+}
+
+/** Turn banner, gallows drawing, masked word, and wrong-guess tally. */
+@Composable
+private fun WordPanel(state: HangmanUiState, banner: String) {
+    Text(banner, style = MaterialTheme.typography.titleMedium, textAlign = TextAlign.Center)
+    Spacer(Modifier.height(16.dp))
+    Gallows(wrongCount = state.wrongCount)
+    Spacer(Modifier.height(16.dp))
+    Text(
+        state.masked.toCharArray().joinToString(" ") { it.uppercase() },
+        fontSize = 28.sp,
+        fontWeight = FontWeight.Bold,
+        fontFamily = FontFamily.Monospace,
+        textAlign = TextAlign.Center,
+    )
+    Spacer(Modifier.height(8.dp))
+    Text(
+        "Wrong guesses (${state.wrongCount}/${state.maxWrong}): " +
+            state.wrongLetters.toCharArray().joinToString(" ") { it.uppercase() },
+        style = MaterialTheme.typography.bodyMedium,
+        textAlign = TextAlign.Center,
+    )
 }
 
 @Composable
@@ -125,7 +173,9 @@ private fun LetterKeyboard(
     val rows = ('A'..'Z').chunked(7)
     Column(
         verticalArrangement = Arrangement.spacedBy(6.dp),
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .widthIn(max = 420.dp)
+            .fillMaxWidth(),
     ) {
         rows.forEach { row ->
             Row(

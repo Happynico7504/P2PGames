@@ -3,15 +3,20 @@ package net.nicochristmann.p2pgames.ui
 import android.net.wifi.p2p.WifiP2pDevice
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
@@ -28,61 +33,102 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardCapitalization
-import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import net.nicochristmann.p2pgames.net.Player
+
+/**
+ * Two-pane lobby scaffold: [main] beside [side] in landscape (side pane
+ * scrolls), [main] above [side] in portrait.
+ */
+@Composable
+private fun AdaptiveLobby(
+    main: @Composable (Modifier) -> Unit,
+    side: @Composable () -> Unit,
+) {
+    BoxWithConstraints(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(24.dp),
+    ) {
+        if (maxWidth > maxHeight) {
+            Row(
+                modifier = Modifier.fillMaxSize(),
+                horizontalArrangement = Arrangement.spacedBy(24.dp),
+            ) {
+                Column(
+                    modifier = Modifier
+                        .weight(1.2f)
+                        .fillMaxHeight(),
+                ) {
+                    main(Modifier.weight(1f))
+                }
+                Column(
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxHeight()
+                        .verticalScroll(rememberScrollState()),
+                    verticalArrangement = Arrangement.Center,
+                ) {
+                    side()
+                }
+            }
+        } else {
+            Column(modifier = Modifier.fillMaxSize()) {
+                main(Modifier.weight(1f))
+                Spacer(Modifier.height(16.dp))
+                side()
+            }
+        }
+    }
+}
 
 @Composable
 fun HostLobbyScreen(
-    players: List<net.nicochristmann.p2pgames.net.Player>,
+    players: List<Player>,
     status: String?,
     onStartTicTacToe: () -> Unit,
     onStartHangman: (customWord: String?) -> Unit,
     onLeave: () -> Unit,
 ) {
     var showHangmanDialog by remember { mutableStateOf(false) }
+    val enoughPlayers = players.size >= 2
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(24.dp),
-    ) {
-        Text("Your session", style = MaterialTheme.typography.headlineSmall)
-        status?.let {
-            Spacer(Modifier.height(4.dp))
-            Text(it, style = MaterialTheme.typography.bodyMedium)
-        }
-        Spacer(Modifier.height(16.dp))
-
-        PlayerList(players = players, modifier = Modifier.weight(1f))
-
-        val enoughPlayers = players.size >= 2
-        if (!enoughPlayers) {
-            Text(
-                "Waiting for at least one more player…",
-                style = MaterialTheme.typography.bodyMedium,
-            )
+    AdaptiveLobby(
+        main = { listModifier ->
+            ScreenHeader("Your session", status)
+            Spacer(Modifier.height(16.dp))
+            PlayerList(players = players, modifier = listModifier)
+        },
+        side = {
+            if (!enoughPlayers) {
+                Text(
+                    "Waiting for at least one more player…",
+                    style = MaterialTheme.typography.bodyMedium,
+                )
+                Spacer(Modifier.height(8.dp))
+            }
+            Button(
+                onClick = onStartTicTacToe,
+                enabled = enoughPlayers,
+                modifier = Modifier.fillMaxWidth(),
+            ) {
+                Text("Start Tic-Tac-Toe")
+            }
             Spacer(Modifier.height(8.dp))
-        }
-        Button(
-            onClick = onStartTicTacToe,
-            enabled = enoughPlayers,
-            modifier = Modifier.fillMaxWidth(),
-        ) {
-            Text("Start Tic-Tac-Toe")
-        }
-        Spacer(Modifier.height(8.dp))
-        Button(
-            onClick = { showHangmanDialog = true },
-            enabled = enoughPlayers,
-            modifier = Modifier.fillMaxWidth(),
-        ) {
-            Text("Start Hangman")
-        }
-        Spacer(Modifier.height(8.dp))
-        OutlinedButton(onClick = onLeave, modifier = Modifier.fillMaxWidth()) {
-            Text("Close session")
-        }
-    }
+            Button(
+                onClick = { showHangmanDialog = true },
+                enabled = enoughPlayers,
+                modifier = Modifier.fillMaxWidth(),
+            ) {
+                Text("Start Hangman")
+            }
+            Spacer(Modifier.height(8.dp))
+            OutlinedButton(onClick = onLeave, modifier = Modifier.fillMaxWidth()) {
+                Text("Close session")
+            }
+        },
+    )
 
     if (showHangmanDialog) {
         HangmanWordDialog(
@@ -146,104 +192,89 @@ fun DiscoverScreen(
     onConnect: (WifiP2pDevice) -> Unit,
     onBack: () -> Unit,
 ) {
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(24.dp),
-    ) {
-        Text("Nearby sessions", style = MaterialTheme.typography.headlineSmall)
-        status?.let {
-            Spacer(Modifier.height(4.dp))
-            Text(it, style = MaterialTheme.typography.bodyMedium)
-        }
-        Spacer(Modifier.height(16.dp))
-
-        if (peers.isEmpty()) {
-            Column(
-                modifier = Modifier
-                    .weight(1f)
-                    .fillMaxWidth(),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.Center,
-            ) {
-                Text(
-                    "Looking for nearby devices…\nMake sure the host has started a session.",
-                    style = MaterialTheme.typography.bodyMedium,
-                )
-            }
-        } else {
-            LazyColumn(
-                modifier = Modifier.weight(1f),
-                verticalArrangement = Arrangement.spacedBy(8.dp),
-            ) {
-                items(peers, key = { it.deviceAddress }) { device ->
-                    Card(modifier = Modifier.fillMaxWidth()) {
-                        Column(
-                            Modifier
-                                .fillMaxWidth()
-                                .clickable { onConnect(device) }
-                                .padding(16.dp),
-                        ) {
-                            Text(
-                                device.deviceName.ifBlank { "Unknown device" },
-                                style = MaterialTheme.typography.titleMedium,
-                            )
-                            Text(
-                                device.deviceAddress,
-                                style = MaterialTheme.typography.bodySmall,
-                            )
+    AdaptiveLobby(
+        main = { listModifier ->
+            ScreenHeader("Nearby sessions", status)
+            Spacer(Modifier.height(16.dp))
+            if (peers.isEmpty()) {
+                Column(
+                    modifier = listModifier.fillMaxWidth(),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center,
+                ) {
+                    Text(
+                        "Looking for nearby devices…\nMake sure the host has started a session.",
+                        style = MaterialTheme.typography.bodyMedium,
+                        textAlign = TextAlign.Center,
+                    )
+                }
+            } else {
+                LazyColumn(
+                    modifier = listModifier,
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    items(peers, key = { it.deviceAddress }) { device ->
+                        Card(modifier = Modifier.fillMaxWidth()) {
+                            Column(
+                                Modifier
+                                    .fillMaxWidth()
+                                    .clickable { onConnect(device) }
+                                    .padding(16.dp),
+                            ) {
+                                Text(
+                                    device.deviceName.ifBlank { "Unknown device" },
+                                    style = MaterialTheme.typography.titleMedium,
+                                )
+                                Text(
+                                    device.deviceAddress,
+                                    style = MaterialTheme.typography.bodySmall,
+                                )
+                            }
                         }
                     }
                 }
             }
-        }
-
-        Spacer(Modifier.height(8.dp))
-        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            OutlinedButton(onClick = onBack, modifier = Modifier.weight(1f)) {
-                Text("Back")
-            }
-            Button(onClick = onRefresh, modifier = Modifier.weight(1f)) {
+        },
+        side = {
+            Button(onClick = onRefresh, modifier = Modifier.fillMaxWidth()) {
                 Text("Rescan")
             }
-        }
-    }
+            Spacer(Modifier.height(8.dp))
+            OutlinedButton(onClick = onBack, modifier = Modifier.fillMaxWidth()) {
+                Text("Back")
+            }
+        },
+    )
 }
 
 @Composable
 fun ClientLobbyScreen(
-    players: List<net.nicochristmann.p2pgames.net.Player>,
+    players: List<Player>,
     status: String?,
     onLeave: () -> Unit,
 ) {
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(24.dp),
-    ) {
-        Text("Session lobby", style = MaterialTheme.typography.headlineSmall)
-        status?.let {
-            Spacer(Modifier.height(4.dp))
-            Text(it, style = MaterialTheme.typography.bodyMedium)
-        }
-        Spacer(Modifier.height(16.dp))
-
-        PlayerList(players = players, modifier = Modifier.weight(1f))
-
-        Text(
-            "The host picks the next game — hang tight!",
-            style = MaterialTheme.typography.bodyMedium,
-        )
-        Spacer(Modifier.height(8.dp))
-        OutlinedButton(onClick = onLeave, modifier = Modifier.fillMaxWidth()) {
-            Text("Leave session")
-        }
-    }
+    AdaptiveLobby(
+        main = { listModifier ->
+            ScreenHeader("Session lobby", status)
+            Spacer(Modifier.height(16.dp))
+            PlayerList(players = players, modifier = listModifier)
+        },
+        side = {
+            Text(
+                "The host picks the next game — hang tight!",
+                style = MaterialTheme.typography.bodyMedium,
+            )
+            Spacer(Modifier.height(8.dp))
+            OutlinedButton(onClick = onLeave, modifier = Modifier.fillMaxWidth()) {
+                Text("Leave session")
+            }
+        },
+    )
 }
 
 @Composable
 private fun PlayerList(
-    players: List<net.nicochristmann.p2pgames.net.Player>,
+    players: List<Player>,
     modifier: Modifier = Modifier,
 ) {
     LazyColumn(modifier = modifier, verticalArrangement = Arrangement.spacedBy(8.dp)) {
