@@ -9,7 +9,12 @@ nearby players discover it and join, and the host picks a game.
 | Game | Players | Notes |
 |------|---------|-------|
 | Tic-Tac-Toe | 2 | Host plays X, first joiner plays O; everyone else spectates live. |
-| Hangman | 2+ | Host types a secret word (and sits out) **or** picks a random word so everyone guesses. Correct guess keeps your turn, wrong guess passes it on; 6 wrong guesses loses the round. |
+| Hangman | 2+ | Host types a secret word (and sits out) **or** picks a random word so everyone guesses. 6 wrong guesses lose the round. |
+| Ludo (Mensch argere dich nicht) | 2-4 | Classic 40-field board. 6 = enter/extra roll, captures send tokens home. Finished players take podium places; the game runs until one player remains. |
+| Uno | 2-8 | Full 108-card deck with skip/reverse/+2/wild/+4. A drawn card may be played immediately or kept. First empty hand wins. |
+| Goose Race | 2-8 | The classic 63-field goose game: geese hop again, bridge, inn, well, maze, prison, death; field 63 must be hit exactly. |
+| Kniffel | 2-8 | 13 categories, three rolls with holds, upper-section bonus at 63. Highest total wins. |
+| Sea Battle | 2 | Random fleet placement with reshuffle, then take turns firing; a hit grants another shot. |
 
 ## How it works
 

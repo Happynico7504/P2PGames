@@ -1,5 +1,6 @@
 package net.nicochristmann.p2pgames.game
 
+import net.nicochristmann.p2pgames.net.Msg
 import org.json.JSONObject
 
 /**
@@ -18,13 +19,16 @@ class HangmanGame(
     private val word: String,
     val setterId: Int,
     guesserIds: List<Int>,
-) {
+) : HostGame {
     companion object {
         const val STATUS_PLAYING = "playing"
         const val STATUS_WON = "won"
         const val STATUS_LOST = "lost"
         const val MAX_WRONG = 6
         const val NO_SETTER = -1
+
+        fun guessInput(letter: Char): JSONObject =
+            JSONObject().put("action", "guess").put("letter", letter.toString())
     }
 
     private val guessers = guesserIds.toMutableList()
@@ -34,7 +38,22 @@ class HangmanGame(
     private var status = STATUS_PLAYING
     private var winner = -1
 
-    val isFinished: Boolean get() = status != STATUS_PLAYING
+    override val gameId: String get() = Msg.GAME_HANGMAN
+    override val isFinished: Boolean get() = status != STATUS_PLAYING
+
+    override fun input(playerId: Int, data: JSONObject): Boolean {
+        if (data.optString("action") != "guess") return false
+        val letter = data.optString("letter").firstOrNull() ?: return false
+        return guess(playerId, letter)
+    }
+
+    override fun playerLeft(playerId: Int): Boolean {
+        if (isFinished) return true
+        if (playerId == setterId) return false
+        return removeGuesser(playerId)
+    }
+
+    override fun toJsonFor(playerId: Int): JSONObject = toJson()
 
     private fun currentTurn(): Int =
         if (guessers.isEmpty()) NO_SETTER else guessers[turnIndex % guessers.size]
@@ -102,7 +121,7 @@ data class HangmanUiState(
     val setterId: Int,
     val status: String,
     val winner: Int,
-) {
+) : GameUi {
     val wrongCount: Int get() = wrongLetters.length
 
     fun isGuessed(letter: Char): Boolean {

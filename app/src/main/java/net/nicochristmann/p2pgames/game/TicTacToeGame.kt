@@ -1,19 +1,19 @@
 package net.nicochristmann.p2pgames.game
 
+import net.nicochristmann.p2pgames.net.Msg
 import org.json.JSONArray
 import org.json.JSONObject
 
-/**
- * Host-side rules engine for Tic-Tac-Toe. The host validates every move
- * (its own and the clients') through [move] and broadcasts [toJson] after
- * each change.
- */
-class TicTacToeGame(val xPlayerId: Int, val oPlayerId: Int) {
+/** Host-side rules engine for Tic-Tac-Toe. */
+class TicTacToeGame(val xPlayerId: Int, val oPlayerId: Int) : HostGame {
 
     companion object {
         const val STATUS_PLAYING = "playing"
         const val STATUS_WON = "won"
         const val STATUS_DRAW = "draw"
+
+        fun moveInput(cell: Int): JSONObject =
+            JSONObject().put("action", "move").put("cell", cell)
 
         private val WIN_LINES = listOf(
             intArrayOf(0, 1, 2), intArrayOf(3, 4, 5), intArrayOf(6, 7, 8),
@@ -27,6 +27,16 @@ class TicTacToeGame(val xPlayerId: Int, val oPlayerId: Int) {
     private var status = STATUS_PLAYING
     private var winner = -1
     private var winLine: IntArray? = null
+
+    override val gameId: String get() = Msg.GAME_TTT
+    override val isFinished: Boolean get() = status != STATUS_PLAYING
+
+    override fun input(playerId: Int, data: JSONObject): Boolean =
+        data.optString("action") == "move" && move(playerId, data.optInt("cell", -1))
+
+    override fun playerLeft(playerId: Int): Boolean = !involves(playerId)
+
+    override fun toJsonFor(playerId: Int): JSONObject = toJson()
 
     fun involves(playerId: Int) = playerId == xPlayerId || playerId == oPlayerId
 
@@ -74,7 +84,7 @@ data class TttUiState(
     val status: String,
     val winner: Int,
     val winLine: List<Int>,
-) {
+) : GameUi {
     companion object {
         fun from(json: JSONObject): TttUiState {
             val boardArr = json.getJSONArray("board")

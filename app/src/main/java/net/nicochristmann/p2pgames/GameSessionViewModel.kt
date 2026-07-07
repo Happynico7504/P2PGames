@@ -8,10 +8,16 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import android.net.wifi.p2p.WifiP2pDevice
 import android.net.wifi.p2p.WifiP2pInfo
+import net.nicochristmann.p2pgames.game.BattleshipGame
+import net.nicochristmann.p2pgames.game.GameUi
+import net.nicochristmann.p2pgames.game.GameUiParser
+import net.nicochristmann.p2pgames.game.GooseGame
 import net.nicochristmann.p2pgames.game.HangmanGame
-import net.nicochristmann.p2pgames.game.HangmanUiState
+import net.nicochristmann.p2pgames.game.HostGame
+import net.nicochristmann.p2pgames.game.KniffelGame
+import net.nicochristmann.p2pgames.game.LudoGame
 import net.nicochristmann.p2pgames.game.TicTacToeGame
-import net.nicochristmann.p2pgames.game.TttUiState
+import net.nicochristmann.p2pgames.game.UnoGame
 import net.nicochristmann.p2pgames.game.WordBank
 import net.nicochristmann.p2pgames.net.GameClient
 import net.nicochristmann.p2pgames.net.GameHost
@@ -27,17 +33,17 @@ sealed interface Screen {
     data object HostLobby : Screen
     data object Discover : Screen
     data object ClientLobby : Screen
-    data object TicTacToe : Screen
-    data object Hangman : Screen
+    data object Game : Screen
 }
 
 /**
  * Coordinates the whole session: Wi-Fi Direct group/discovery, the TCP
  * host/client, the roster, and the currently running game.
  *
- * The host is authoritative: it owns the rules engines, applies every move
- * (its own directly, clients' via socket messages) and broadcasts the
- * resulting state. Clients only render states and send inputs.
+ * The host is authoritative: it owns the rules engine, applies every input
+ * (its own directly, clients' via socket messages) and sends each device
+ * its own view of the resulting state. Clients only render states and
+ * send inputs.
  */
 class GameSessionViewModel(app: Application) : AndroidViewModel(app) {
 
@@ -54,15 +60,12 @@ class GameSessionViewModel(app: Application) : AndroidViewModel(app) {
         private set
     var isHost by mutableStateOf(false)
         private set
-    var tttState by mutableStateOf<TttUiState?>(null)
-        private set
-    var hangmanState by mutableStateOf<HangmanUiState?>(null)
+    var gameUi by mutableStateOf<GameUi?>(null)
         private set
 
     private var host: GameHost? = null
     private var client: GameClient? = null
-    private var tttGame: TicTacToeGame? = null
-    private var hangmanGame: HangmanGame? = null
+    private var activeGame: HostGame? = null
 
     init {
         wifi.register()
@@ -128,18 +131,15 @@ class GameSessionViewModel(app: Application) : AndroidViewModel(app) {
                 host?.send(clientId, Msg.welcome(clientId, players))
                 host?.broadcast(Msg.roster(players))
                 // Late joiners land in a running game as spectators.
-                tttGame?.let { host?.send(clientId, Msg.start(Msg.GAME_TTT, it.toJson())) }
-                hangmanGame?.let { host?.send(clientId, Msg.start(Msg.GAME_HANGMAN, it.toJson())) }
+                activeGame?.let { game ->
+                    host?.send(clientId, Msg.start(game.gameId, game.toJsonFor(clientId)))
+                }
                 status = "$name joined."
             }
-            Msg.MOVE -> {
-                val game = tttGame ?: return
-                if (game.move(clientId, message.optInt("cell", -1))) publishTtt()
-            }
-            Msg.GUESS -> {
-                val game = hangmanGame ?: return
-                val letter = message.optString("letter").firstOrNull() ?: return
-                if (game.guess(clientId, letter)) publishHangman()
+            Msg.INPUT -> {
+                val game = activeGame ?: return
+                val data = message.optJSONObject("data") ?: return
+                if (game.input(clientId, data)) publishGame()
             }
         }
     }
@@ -150,32 +150,30 @@ class GameSessionViewModel(app: Application) : AndroidViewModel(app) {
         host?.broadcast(Msg.roster(players))
         status = "${leaving.name} left."
 
-        tttGame?.let { game ->
-            if (game.involves(clientId)) {
-                returnToLobby("${leaving.name} left the game.")
-                return
-            }
-        }
-        hangmanGame?.let { game ->
-            if (game.isFinished) return@let
-            if (clientId == game.setterId || !game.removeGuesser(clientId)) {
+        activeGame?.let { game ->
+            if (!game.isFinished && !game.playerLeft(clientId)) {
                 returnToLobby("${leaving.name} left the game.")
             } else {
-                publishHangman()
+                // The departure may have changed whose turn it is etc.
+                publishGame()
             }
         }
     }
 
-    fun startTicTacToe() {
+    /** Host: creates and starts the selected game with the current roster. */
+    fun startSelectedGame(gameId: String) {
         if (!isHost || players.size < 2) return
-        val game = TicTacToeGame(xPlayerId = players[0].id, oPlayerId = players[1].id)
-        tttGame = game
-        hangmanGame = null
-        hangmanState = null
-        publishTtt()
-        host?.broadcast(Msg.start(Msg.GAME_TTT, game.toJson()))
-        screen = Screen.TicTacToe
-        status = null
+        val ids = players.map { it.id }
+        val game: HostGame = when (gameId) {
+            Msg.GAME_TTT -> TicTacToeGame(xPlayerId = ids[0], oPlayerId = ids[1])
+            Msg.GAME_LUDO -> LudoGame(ids.take(4))
+            Msg.GAME_UNO -> UnoGame(ids.take(8))
+            Msg.GAME_GOOSE -> GooseGame(ids.take(8))
+            Msg.GAME_KNIFFEL -> KniffelGame(ids.take(8))
+            Msg.GAME_BATTLESHIP -> BattleshipGame(ids[0], ids[1])
+            else -> return
+        }
+        launchGame(game)
     }
 
     /** [customWord] null means "pick a random word that even the host doesn't know". */
@@ -195,40 +193,48 @@ class GameSessionViewModel(app: Application) : AndroidViewModel(app) {
             setterId = HangmanGame.NO_SETTER
         }
         val guessers = players.map { it.id }.filter { it != setterId }
-        val game = HangmanGame(word, setterId, guessers)
-        hangmanGame = game
-        tttGame = null
-        tttState = null
-        publishHangman()
-        host?.broadcast(Msg.start(Msg.GAME_HANGMAN, game.toJson()))
-        screen = Screen.Hangman
+        launchGame(HangmanGame(word, setterId, guessers))
+    }
+
+    private fun launchGame(game: HostGame) {
+        activeGame = game
+        players.forEach { p ->
+            if (p.id != 0) host?.send(p.id, Msg.start(game.gameId, game.toJsonFor(p.id)))
+        }
+        gameUi = GameUiParser.parse(game.gameId, game.toJsonFor(0))
+        screen = Screen.Game
         status = null
+    }
+
+    /** Sends every device (including this one) its own view of the state. */
+    private fun publishGame() {
+        val game = activeGame ?: return
+        players.forEach { p ->
+            if (p.id != 0) host?.send(p.id, Msg.state(game.gameId, game.toJsonFor(p.id)))
+        }
+        gameUi = GameUiParser.parse(game.gameId, game.toJsonFor(0))
     }
 
     /** Host: ends the current game for everyone and returns to the lobby. */
     fun returnToLobby(message: String? = null) {
         if (!isHost) return
-        tttGame = null
-        hangmanGame = null
-        tttState = null
-        hangmanState = null
+        activeGame = null
+        gameUi = null
         host?.broadcast(Msg.lobby(message))
         screen = Screen.HostLobby
         if (message != null) status = message
     }
 
-    private fun publishTtt() {
-        val game = tttGame ?: return
-        val json = game.toJson()
-        tttState = TttUiState.from(json)
-        host?.broadcast(Msg.state(Msg.GAME_TTT, json))
-    }
+    // ------------------------------------------------------------------ input
 
-    private fun publishHangman() {
-        val game = hangmanGame ?: return
-        val json = game.toJson()
-        hangmanState = HangmanUiState.from(json)
-        host?.broadcast(Msg.state(Msg.GAME_HANGMAN, json))
+    /** Routes a game input: applied directly when hosting, sent otherwise. */
+    fun sendInput(data: JSONObject) {
+        if (isHost) {
+            val game = activeGame ?: return
+            if (game.input(myPlayerId, data)) publishGame()
+        } else {
+            client?.send(Msg.input(data))
+        }
     }
 
     // ---------------------------------------------------------------- joining
@@ -302,31 +308,24 @@ class GameSessionViewModel(app: Application) : AndroidViewModel(app) {
             }
             Msg.ROSTER -> players = Msg.parsePlayers(message.getJSONArray("players"))
             Msg.START -> {
-                val state = message.getJSONObject("state")
-                when (message.optString("game")) {
-                    Msg.GAME_TTT -> {
-                        tttState = TttUiState.from(state)
-                        hangmanState = null
-                        screen = Screen.TicTacToe
-                    }
-                    Msg.GAME_HANGMAN -> {
-                        hangmanState = HangmanUiState.from(state)
-                        tttState = null
-                        screen = Screen.Hangman
-                    }
+                gameUi = GameUiParser.parse(
+                    message.optString("game"),
+                    message.getJSONObject("state"),
+                )
+                if (gameUi != null) {
+                    screen = Screen.Game
+                    status = null
                 }
-                status = null
             }
             Msg.STATE -> {
-                val state = message.getJSONObject("state")
-                when (message.optString("game")) {
-                    Msg.GAME_TTT -> tttState = TttUiState.from(state)
-                    Msg.GAME_HANGMAN -> hangmanState = HangmanUiState.from(state)
-                }
+                val ui = GameUiParser.parse(
+                    message.optString("game"),
+                    message.getJSONObject("state"),
+                )
+                if (ui != null) gameUi = ui
             }
             Msg.LOBBY -> {
-                tttState = null
-                hangmanState = null
+                gameUi = null
                 screen = Screen.ClientLobby
                 status = message.optString("message").ifBlank { null }
             }
@@ -338,26 +337,6 @@ class GameSessionViewModel(app: Application) : AndroidViewModel(app) {
         if (client == null) return
         cleanupSession()
         status = message
-    }
-
-    // ------------------------------------------------------------------ moves
-
-    fun playTttCell(cell: Int) {
-        if (isHost) {
-            val game = tttGame ?: return
-            if (game.move(myPlayerId, cell)) publishTtt()
-        } else {
-            client?.send(Msg.move(cell))
-        }
-    }
-
-    fun guessLetter(letter: Char) {
-        if (isHost) {
-            val game = hangmanGame ?: return
-            if (game.guess(myPlayerId, letter)) publishHangman()
-        } else {
-            client?.send(Msg.guess(letter))
-        }
     }
 
     // ---------------------------------------------------------------- cleanup
@@ -376,10 +355,8 @@ class GameSessionViewModel(app: Application) : AndroidViewModel(app) {
         wifi.stopDiscovery()
         wifi.removeGroup()
         wifi.clearPeers()
-        tttGame = null
-        hangmanGame = null
-        tttState = null
-        hangmanState = null
+        activeGame = null
+        gameUi = null
         players = emptyList()
         myPlayerId = 0
         isHost = false

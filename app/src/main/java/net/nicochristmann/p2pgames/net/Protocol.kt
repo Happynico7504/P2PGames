@@ -10,8 +10,13 @@ data class Player(val id: Int, val name: String)
  * Wire protocol: newline-delimited JSON objects over a TCP socket to the
  * group owner. Every message carries a "type" field.
  *
- * Client -> Host:  hello, move, guess
+ * Client -> Host:  hello, input
  * Host -> Client:  welcome, roster, start, state, lobby, error
+ *
+ * Game inputs travel as `input` messages whose `data` payload is defined
+ * by each game's rules engine (see the companion builders on the game
+ * classes). Game state always flows host -> client via `start`/`state`,
+ * and each client receives its own view (hidden information stays hidden).
  */
 object Msg {
     const val TYPE = "type"
@@ -23,11 +28,15 @@ object Msg {
     const val STATE = "state"
     const val LOBBY = "lobby"
     const val ERROR = "error"
-    const val MOVE = "move"
-    const val GUESS = "guess"
+    const val INPUT = "input"
 
     const val GAME_TTT = "tictactoe"
     const val GAME_HANGMAN = "hangman"
+    const val GAME_LUDO = "ludo"
+    const val GAME_UNO = "uno"
+    const val GAME_GOOSE = "goose"
+    const val GAME_KNIFFEL = "kniffel"
+    const val GAME_BATTLESHIP = "battleship"
 
     fun hello(name: String): JSONObject =
         JSONObject().put(TYPE, HELLO).put("name", name)
@@ -50,11 +59,8 @@ object Msg {
     fun error(message: String): JSONObject =
         JSONObject().put(TYPE, ERROR).put("message", message)
 
-    fun move(cell: Int): JSONObject =
-        JSONObject().put(TYPE, MOVE).put("cell", cell)
-
-    fun guess(letter: Char): JSONObject =
-        JSONObject().put(TYPE, GUESS).put("letter", letter.toString())
+    fun input(data: JSONObject): JSONObject =
+        JSONObject().put(TYPE, INPUT).put("data", data)
 
     private fun playersToJson(players: List<Player>): JSONArray {
         val arr = JSONArray()

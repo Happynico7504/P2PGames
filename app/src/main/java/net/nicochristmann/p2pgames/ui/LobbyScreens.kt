@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -18,7 +19,6 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
@@ -35,17 +35,96 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import net.nicochristmann.p2pgames.net.Msg
 import net.nicochristmann.p2pgames.net.Player
 
-/**
- * Two-pane lobby scaffold: [main] beside [side] in landscape (side pane
- * scrolls), [main] above [side] in portrait.
- */
+/** An entry in the host's game picker. */
+private data class GameOption(
+    val id: String,
+    val title: String,
+    val subtitle: String,
+    val minPlayers: Int,
+)
+
+private val gameOptions = listOf(
+    GameOption(Msg.GAME_TTT, "Tic-Tac-Toe", "2 play, extras watch", 2),
+    GameOption(Msg.GAME_HANGMAN, "Hangman", "2+ players", 2),
+    GameOption(Msg.GAME_LUDO, "Ludo", "2–4 players", 2),
+    GameOption(Msg.GAME_UNO, "Uno", "2–8 players", 2),
+    GameOption(Msg.GAME_GOOSE, "Goose Race", "2–8 players", 2),
+    GameOption(Msg.GAME_KNIFFEL, "Kniffel", "2–8 players", 2),
+    GameOption(Msg.GAME_BATTLESHIP, "Sea Battle", "2 play, extras watch", 2),
+)
+
 @Composable
-private fun AdaptiveLobby(
-    main: @Composable (Modifier) -> Unit,
-    side: @Composable () -> Unit,
+fun HostLobbyScreen(
+    players: List<Player>,
+    status: String?,
+    onStartGame: (gameId: String) -> Unit,
+    onStartHangman: (customWord: String?) -> Unit,
+    onLeave: () -> Unit,
 ) {
+    var showHangmanDialog by remember { mutableStateOf(false) }
+    val enoughPlayers = players.size >= 2
+
+    val gamePicker: @Composable () -> Unit = {
+        Text("Pick a game", style = MaterialTheme.typography.titleMedium)
+        if (!enoughPlayers) {
+            Spacer(Modifier.height(4.dp))
+            Text(
+                "Waiting for at least one more player…",
+                style = MaterialTheme.typography.bodyMedium,
+            )
+        }
+        Spacer(Modifier.height(8.dp))
+        gameOptions.chunked(2).forEach { rowOptions ->
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                rowOptions.forEach { option ->
+                    val enabled = players.size >= option.minPlayers
+                    Card(
+                        modifier = Modifier.weight(1f),
+                    ) {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable(enabled = enabled) {
+                                    if (option.id == Msg.GAME_HANGMAN) {
+                                        showHangmanDialog = true
+                                    } else {
+                                        onStartGame(option.id)
+                                    }
+                                }
+                                .padding(12.dp),
+                        ) {
+                            Text(
+                                option.title,
+                                style = MaterialTheme.typography.titleSmall,
+                                color = if (enabled) {
+                                    MaterialTheme.colorScheme.onSurface
+                                } else {
+                                    MaterialTheme.colorScheme.outline
+                                },
+                            )
+                            Text(
+                                option.subtitle,
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.outline,
+                            )
+                        }
+                    }
+                }
+                if (rowOptions.size == 1) Spacer(Modifier.weight(1f))
+            }
+            Spacer(Modifier.height(8.dp))
+        }
+        OutlinedButton(onClick = onLeave, modifier = Modifier.fillMaxWidth()) {
+            Text("Close session")
+        }
+    }
+
     BoxWithConstraints(
         modifier = Modifier
             .fillMaxSize()
@@ -58,77 +137,41 @@ private fun AdaptiveLobby(
             ) {
                 Column(
                     modifier = Modifier
-                        .weight(1.2f)
+                        .weight(1f)
                         .fillMaxHeight(),
                 ) {
-                    main(Modifier.weight(1f))
+                    ScreenHeader("Your session", status)
+                    Spacer(Modifier.height(16.dp))
+                    PlayerList(players = players, modifier = Modifier.weight(1f))
                 }
                 Column(
                     modifier = Modifier
-                        .weight(1f)
+                        .weight(1.2f)
                         .fillMaxHeight()
                         .verticalScroll(rememberScrollState()),
-                    verticalArrangement = Arrangement.Center,
                 ) {
-                    side()
+                    gamePicker()
                 }
             }
         } else {
-            Column(modifier = Modifier.fillMaxSize()) {
-                main(Modifier.weight(1f))
+            // Portrait: one scrollable column so any player count and the
+            // full game list stay reachable on any screen height.
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .verticalScroll(rememberScrollState()),
+            ) {
+                ScreenHeader("Your session", status)
                 Spacer(Modifier.height(16.dp))
-                side()
+                players.forEach { player ->
+                    PlayerCard(player)
+                    Spacer(Modifier.height(8.dp))
+                }
+                Spacer(Modifier.height(8.dp))
+                gamePicker()
             }
         }
     }
-}
-
-@Composable
-fun HostLobbyScreen(
-    players: List<Player>,
-    status: String?,
-    onStartTicTacToe: () -> Unit,
-    onStartHangman: (customWord: String?) -> Unit,
-    onLeave: () -> Unit,
-) {
-    var showHangmanDialog by remember { mutableStateOf(false) }
-    val enoughPlayers = players.size >= 2
-
-    AdaptiveLobby(
-        main = { listModifier ->
-            ScreenHeader("Your session", status)
-            Spacer(Modifier.height(16.dp))
-            PlayerList(players = players, modifier = listModifier)
-        },
-        side = {
-            if (!enoughPlayers) {
-                Text(
-                    "Waiting for at least one more player…",
-                    style = MaterialTheme.typography.bodyMedium,
-                )
-                Spacer(Modifier.height(8.dp))
-            }
-            Button(
-                onClick = onStartTicTacToe,
-                enabled = enoughPlayers,
-                modifier = Modifier.fillMaxWidth(),
-            ) {
-                Text("Start Tic-Tac-Toe")
-            }
-            Spacer(Modifier.height(8.dp))
-            Button(
-                onClick = { showHangmanDialog = true },
-                enabled = enoughPlayers,
-                modifier = Modifier.fillMaxWidth(),
-            ) {
-                Text("Start Hangman")
-            }
-            Spacer(Modifier.height(8.dp))
-            OutlinedButton(onClick = onLeave, modifier = Modifier.fillMaxWidth()) {
-                Text("Close session")
-            }
-        },
-    )
 
     if (showHangmanDialog) {
         HangmanWordDialog(
@@ -184,6 +227,52 @@ private fun HangmanWordDialog(
     )
 }
 
+/**
+ * Two-pane scaffold for the joiner screens: [main] beside [side] in
+ * landscape (side pane scrolls), [main] above [side] in portrait.
+ */
+@Composable
+private fun AdaptiveLobby(
+    main: @Composable (Modifier) -> Unit,
+    side: @Composable () -> Unit,
+) {
+    BoxWithConstraints(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(24.dp),
+    ) {
+        if (maxWidth > maxHeight) {
+            Row(
+                modifier = Modifier.fillMaxSize(),
+                horizontalArrangement = Arrangement.spacedBy(24.dp),
+            ) {
+                Column(
+                    modifier = Modifier
+                        .weight(1.2f)
+                        .fillMaxHeight(),
+                ) {
+                    main(Modifier.weight(1f))
+                }
+                Column(
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxHeight()
+                        .verticalScroll(rememberScrollState()),
+                    verticalArrangement = Arrangement.Center,
+                ) {
+                    side()
+                }
+            }
+        } else {
+            Column(modifier = Modifier.fillMaxSize()) {
+                main(Modifier.weight(1f))
+                Spacer(Modifier.height(16.dp))
+                side()
+            }
+        }
+    }
+}
+
 @Composable
 fun DiscoverScreen(
     peers: List<WifiP2pDevice>,
@@ -236,7 +325,10 @@ fun DiscoverScreen(
             }
         },
         side = {
-            Button(onClick = onRefresh, modifier = Modifier.fillMaxWidth()) {
+            androidx.compose.material3.Button(
+                onClick = onRefresh,
+                modifier = Modifier.fillMaxWidth(),
+            ) {
                 Text("Rescan")
             }
             Spacer(Modifier.height(8.dp))
@@ -273,27 +365,32 @@ fun ClientLobbyScreen(
 }
 
 @Composable
+private fun PlayerCard(player: Player) {
+    Card(modifier = Modifier.fillMaxWidth()) {
+        Row(
+            modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text(
+                player.name,
+                style = MaterialTheme.typography.titleMedium,
+                modifier = Modifier.weight(1f),
+            )
+            if (player.id == 0) {
+                Text("Host", style = MaterialTheme.typography.labelMedium)
+            }
+        }
+    }
+}
+
+@Composable
 private fun PlayerList(
     players: List<Player>,
     modifier: Modifier = Modifier,
 ) {
     LazyColumn(modifier = modifier, verticalArrangement = Arrangement.spacedBy(8.dp)) {
         items(players, key = { it.id }) { player ->
-            Card(modifier = Modifier.fillMaxWidth()) {
-                Row(
-                    modifier = Modifier.padding(16.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    Text(
-                        player.name,
-                        style = MaterialTheme.typography.titleMedium,
-                        modifier = Modifier.weight(1f),
-                    )
-                    if (player.id == 0) {
-                        Text("Host", style = MaterialTheme.typography.labelMedium)
-                    }
-                }
-            }
+            PlayerCard(player)
         }
     }
 }
