@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="48dp"
+    android:height="48dp"
+    android:viewportWidth="48"
+    android:viewportHeight="48">
+    <!-- Rounded background -->
+    <path
+        android:fillColor="#1565C0"
+        android:pathData="M8,0 L40,0 A8,8 0 0 1 48,8 L48,40 A8,8 0 0 1 40,48 L8,48 A8,8 0 0 1 0,40 L0,8 A8,8 0 0 1 8,0 Z" />
+    <!-- Tic-tac-toe grid -->
+    <path
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="3"
+        android:strokeLineCap="round"
+        android:pathData="M19,10 L19,38 M29,10 L29,38 M10,19 L38,19 M10,29 L38,29" />
+</vector>
