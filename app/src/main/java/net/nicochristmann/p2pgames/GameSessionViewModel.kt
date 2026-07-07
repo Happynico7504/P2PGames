@@ -1,4 +1,4 @@
-package com.nico.wifidirectgames
+package net.nicochristmann.p2pgames
 
 import android.app.Application
 import androidx.compose.runtime.getValue
@@ -8,16 +8,16 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import android.net.wifi.p2p.WifiP2pDevice
 import android.net.wifi.p2p.WifiP2pInfo
-import com.nico.wifidirectgames.game.HangmanGame
-import com.nico.wifidirectgames.game.HangmanUiState
-import com.nico.wifidirectgames.game.TicTacToeGame
-import com.nico.wifidirectgames.game.TttUiState
-import com.nico.wifidirectgames.game.WordBank
-import com.nico.wifidirectgames.net.GameClient
-import com.nico.wifidirectgames.net.GameHost
-import com.nico.wifidirectgames.net.Msg
-import com.nico.wifidirectgames.net.Player
-import com.nico.wifidirectgames.wifi.WifiDirectController
+import net.nicochristmann.p2pgames.game.HangmanGame
+import net.nicochristmann.p2pgames.game.HangmanUiState
+import net.nicochristmann.p2pgames.game.TicTacToeGame
+import net.nicochristmann.p2pgames.game.TttUiState
+import net.nicochristmann.p2pgames.game.WordBank
+import net.nicochristmann.p2pgames.net.GameClient
+import net.nicochristmann.p2pgames.net.GameHost
+import net.nicochristmann.p2pgames.net.Msg
+import net.nicochristmann.p2pgames.net.Player
+import net.nicochristmann.p2pgames.wifi.WifiDirectController
 import kotlinx.coroutines.launch
 import org.json.JSONObject
 

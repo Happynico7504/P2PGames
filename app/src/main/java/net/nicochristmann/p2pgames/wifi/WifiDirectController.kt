@@ -1,4 +1,4 @@
-package com.nico.wifidirectgames.wifi
+package net.nicochristmann.p2pgames.wifi
 
 import android.annotation.SuppressLint
 import android.content.BroadcastReceiver

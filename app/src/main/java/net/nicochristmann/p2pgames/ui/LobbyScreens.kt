@@ -1,4 +1,4 @@
-package com.nico.wifidirectgames.ui
+package net.nicochristmann.p2pgames.ui
 
 import android.net.wifi.p2p.WifiP2pDevice
 import androidx.compose.foundation.clickable
@@ -33,7 +33,7 @@ import androidx.compose.ui.unit.dp
 
 @Composable
 fun HostLobbyScreen(
-    players: List<com.nico.wifidirectgames.net.Player>,
+    players: List<net.nicochristmann.p2pgames.net.Player>,
     status: String?,
     onStartTicTacToe: () -> Unit,
     onStartHangman: (customWord: String?) -> Unit,
@@ -212,7 +212,7 @@ fun DiscoverScreen(
 
 @Composable
 fun ClientLobbyScreen(
-    players: List<com.nico.wifidirectgames.net.Player>,
+    players: List<net.nicochristmann.p2pgames.net.Player>,
     status: String?,
     onLeave: () -> Unit,
 ) {
@@ -243,7 +243,7 @@ fun ClientLobbyScreen(
 
 @Composable
 private fun PlayerList(
-    players: List<com.nico.wifidirectgames.net.Player>,
+    players: List<net.nicochristmann.p2pgames.net.Player>,
     modifier: Modifier = Modifier,
 ) {
     LazyColumn(modifier = modifier, verticalArrangement = Arrangement.spacedBy(8.dp)) {

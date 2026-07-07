@@ -5,11 +5,11 @@ plugins {
 }
 
 android {
-    namespace = "com.nico.wifidirectgames"
+    namespace = "net.nicochristmann.p2pgames"
     compileSdk = 34
 
     defaultConfig {
-        applicationId = "com.nico.wifidirectgames"
+        applicationId = "net.nicochristmann.p2pgames"
         minSdk = 24
         targetSdk = 34
         versionCode = 1

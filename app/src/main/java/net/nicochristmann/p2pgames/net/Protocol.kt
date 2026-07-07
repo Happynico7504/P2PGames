@@ -1,4 +1,4 @@
-package com.nico.wifidirectgames.net
+package net.nicochristmann.p2pgames.net
 
 import org.json.JSONArray
 import org.json.JSONObject

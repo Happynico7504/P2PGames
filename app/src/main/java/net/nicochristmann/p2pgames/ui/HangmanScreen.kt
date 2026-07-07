@@ -1,4 +1,4 @@
-package com.nico.wifidirectgames.ui
+package net.nicochristmann.p2pgames.ui
 
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.Arrangement
@@ -28,8 +28,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.nico.wifidirectgames.game.HangmanGame
-import com.nico.wifidirectgames.game.HangmanUiState
+import net.nicochristmann.p2pgames.game.HangmanGame
+import net.nicochristmann.p2pgames.game.HangmanUiState
 
 @Composable
 fun HangmanScreen(

@@ -1,4 +1,4 @@
-package com.nico.wifidirectgames.net
+package net.nicochristmann.p2pgames.net
 
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers

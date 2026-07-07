@@ -1,4 +1,4 @@
-package com.nico.wifidirectgames.ui
+package net.nicochristmann.p2pgames.ui
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column

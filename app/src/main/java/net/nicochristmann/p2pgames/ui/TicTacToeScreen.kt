@@ -1,4 +1,4 @@
-package com.nico.wifidirectgames.ui
+package net.nicochristmann.p2pgames.ui
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -23,8 +23,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.nico.wifidirectgames.game.TicTacToeGame
-import com.nico.wifidirectgames.game.TttUiState
+import net.nicochristmann.p2pgames.game.TicTacToeGame
+import net.nicochristmann.p2pgames.game.TttUiState
 
 @Composable
 fun TicTacToeScreen(

@@ -1,4 +1,4 @@
-package com.nico.wifidirectgames.ui
+package net.nicochristmann.p2pgames.ui
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.fillMaxSize
@@ -8,8 +8,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
-import com.nico.wifidirectgames.GameSessionViewModel
-import com.nico.wifidirectgames.Screen
+import net.nicochristmann.p2pgames.GameSessionViewModel
+import net.nicochristmann.p2pgames.Screen
 
 @Composable
 fun App(

@@ -1,4 +1,4 @@
-package com.nico.wifidirectgames
+package net.nicochristmann.p2pgames
 
 import android.Manifest
 import android.content.pm.PackageManager
@@ -9,7 +9,7 @@ import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.core.content.ContextCompat
-import com.nico.wifidirectgames.ui.App
+import net.nicochristmann.p2pgames.ui.App
 
 class MainActivity : ComponentActivity() {
 
