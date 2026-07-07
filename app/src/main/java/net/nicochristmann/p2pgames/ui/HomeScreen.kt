@@ -41,10 +41,10 @@ fun HomeScreen(
                 .padding(24.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
-            Text("WiFi Direct Games", style = MaterialTheme.typography.headlineMedium)
+            Text("P2PGames", style = MaterialTheme.typography.headlineMedium)
             Spacer(Modifier.height(8.dp))
             Text(
-                "Play Tic-Tac-Toe and Hangman with people nearby — no internet or router needed.",
+                "Play a selection of classical games with people nearby — no internet or router needed.",
                 style = MaterialTheme.typography.bodyMedium,
                 textAlign = TextAlign.Center,
             )
