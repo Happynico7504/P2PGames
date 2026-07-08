@@ -123,7 +123,12 @@ One-time setup:
    | `KEY_ALIAS` | optional — defaults to `upload` |
    | `KEY_PASSWORD` | optional — defaults to `KEYSTORE_PASSWORD` (that's also what pressing Enter at keytool's key-password prompt means, and PKCS12 keystores always share it) |
 
-3. **Create the app** in the [Play Console](https://play.google.com/console),
+3. **Host the privacy policy** — the Play listing requires a privacy policy
+   URL. A ready-made page is at [`docs/privacy-policy.html`](docs/privacy-policy.html);
+   upload it to any web server you control and enter its URL in the Play
+   Console.
+
+4. **Create the app** in the [Play Console](https://play.google.com/console),
    enroll in Play App Signing, and upload the `app-release.aab` artifact from
    the latest CI run to an internal-testing track.
 
