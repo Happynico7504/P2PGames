@@ -88,7 +88,7 @@ with the Android SDK installed:
 ./gradlew bundleRelease        # AAB at app/build/outputs/bundle/release/
 ```
 
-Requires JDK 17+. `compileSdk 34`, `minSdk 24` (Android 7.0+).
+Requires JDK 17+. `compileSdk 35`, `targetSdk 35`, `minSdk 24` (Android 7.0+).
 
 ### CI
 

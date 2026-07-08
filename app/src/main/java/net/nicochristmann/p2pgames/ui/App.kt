@@ -1,7 +1,9 @@
 package net.nicochristmann.p2pgames.ui
 
 import androidx.activity.compose.BackHandler
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
@@ -30,46 +32,58 @@ fun App(
             modifier = Modifier.fillMaxSize(),
             color = MaterialTheme.colorScheme.background,
         ) {
-            val screen = viewModel.screen
-            BackHandler(enabled = screen != Screen.Home) { viewModel.leaveSession() }
-
-            when (screen) {
-                Screen.Home -> HomeScreen(
-                    name = viewModel.playerName,
-                    onNameChange = { viewModel.playerName = it },
-                    status = viewModel.status,
-                    onHost = { ensurePermissions { viewModel.hostGame() } },
-                    onJoin = { ensurePermissions { viewModel.joinGame() } },
-                )
-
-                Screen.HostLobby -> HostLobbyScreen(
-                    players = viewModel.players,
-                    status = viewModel.status,
-                    onStartGame = { viewModel.startSelectedGame(it) },
-                    onStartHangman = { word -> viewModel.startHangman(word) },
-                    onLeave = { viewModel.leaveSession() },
-                )
-
-                Screen.Discover -> {
-                    val peers by viewModel.wifi.peers.collectAsState()
-                    DiscoverScreen(
-                        peers = peers,
-                        status = viewModel.status,
-                        onRefresh = { viewModel.refreshDiscovery() },
-                        onConnect = { viewModel.connectToPeer(it) },
-                        onBack = { viewModel.leaveSession() },
-                    )
-                }
-
-                Screen.ClientLobby -> ClientLobbyScreen(
-                    players = viewModel.players,
-                    status = viewModel.status,
-                    onLeave = { viewModel.leaveSession() },
-                )
-
-                Screen.Game -> GameScreen(viewModel)
+            // targetSdk 35 enforces edge-to-edge on Android 15+: the Surface
+            // color extends behind the system bars, the content does not.
+            Box(modifier = Modifier.safeDrawingPadding()) {
+                AppContent(viewModel, ensurePermissions)
             }
         }
+    }
+}
+
+@Composable
+private fun AppContent(
+    viewModel: GameSessionViewModel,
+    ensurePermissions: (action: () -> Unit) -> Unit,
+) {
+    val screen = viewModel.screen
+    BackHandler(enabled = screen != Screen.Home) { viewModel.leaveSession() }
+
+    when (screen) {
+        Screen.Home -> HomeScreen(
+            name = viewModel.playerName,
+            onNameChange = { viewModel.playerName = it },
+            status = viewModel.status,
+            onHost = { ensurePermissions { viewModel.hostGame() } },
+            onJoin = { ensurePermissions { viewModel.joinGame() } },
+        )
+
+        Screen.HostLobby -> HostLobbyScreen(
+            players = viewModel.players,
+            status = viewModel.status,
+            onStartGame = { viewModel.startSelectedGame(it) },
+            onStartHangman = { word -> viewModel.startHangman(word) },
+            onLeave = { viewModel.leaveSession() },
+        )
+
+        Screen.Discover -> {
+            val peers by viewModel.wifi.peers.collectAsState()
+            DiscoverScreen(
+                peers = peers,
+                status = viewModel.status,
+                onRefresh = { viewModel.refreshDiscovery() },
+                onConnect = { viewModel.connectToPeer(it) },
+                onBack = { viewModel.leaveSession() },
+            )
+        }
+
+        Screen.ClientLobby -> ClientLobbyScreen(
+            players = viewModel.players,
+            status = viewModel.status,
+            onLeave = { viewModel.leaveSession() },
+        )
+
+        Screen.Game -> GameScreen(viewModel)
     }
 }
 

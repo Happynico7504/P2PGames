@@ -6,12 +6,12 @@ plugins {
 
 android {
     namespace = "net.nicochristmann.p2pgames"
-    compileSdk = 34
+    compileSdk = 35
 
     defaultConfig {
         applicationId = "net.nicochristmann.p2pgames"
         minSdk = 24
-        targetSdk = 34
+        targetSdk = 35
         // On CI the run number is used, so every build that could go to the
         // Play Store has a strictly increasing versionCode automatically.
         versionCode = System.getenv("GITHUB_RUN_NUMBER")?.toIntOrNull() ?: 2
