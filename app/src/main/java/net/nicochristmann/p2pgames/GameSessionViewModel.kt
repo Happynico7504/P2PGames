@@ -66,6 +66,14 @@ class GameSessionViewModel(app: Application) : AndroidViewModel(app) {
     private var host: GameHost? = null
     private var client: GameClient? = null
     private var activeGame: HostGame? = null
+    private val haptics = GameHaptics(app)
+
+    /** Updates the rendered state and plays the matching haptic feedback. */
+    private fun setGameUi(newUi: GameUi?) {
+        val old = gameUi
+        gameUi = newUi
+        if (newUi != null) haptics.onStateChange(old, newUi, myPlayerId)
+    }
 
     init {
         wifi.register()
@@ -201,7 +209,7 @@ class GameSessionViewModel(app: Application) : AndroidViewModel(app) {
         players.forEach { p ->
             if (p.id != 0) host?.send(p.id, Msg.start(game.gameId, game.toJsonFor(p.id)))
         }
-        gameUi = GameUiParser.parse(game.gameId, game.toJsonFor(0))
+        setGameUi(GameUiParser.parse(game.gameId, game.toJsonFor(0)))
         screen = Screen.Game
         status = null
     }
@@ -212,7 +220,7 @@ class GameSessionViewModel(app: Application) : AndroidViewModel(app) {
         players.forEach { p ->
             if (p.id != 0) host?.send(p.id, Msg.state(game.gameId, game.toJsonFor(p.id)))
         }
-        gameUi = GameUiParser.parse(game.gameId, game.toJsonFor(0))
+        setGameUi(GameUiParser.parse(game.gameId, game.toJsonFor(0)))
     }
 
     /** Host: ends the current game for everyone and returns to the lobby. */
@@ -308,11 +316,12 @@ class GameSessionViewModel(app: Application) : AndroidViewModel(app) {
             }
             Msg.ROSTER -> players = Msg.parsePlayers(message.getJSONArray("players"))
             Msg.START -> {
-                gameUi = GameUiParser.parse(
+                val ui = GameUiParser.parse(
                     message.optString("game"),
                     message.getJSONObject("state"),
                 )
-                if (gameUi != null) {
+                if (ui != null) {
+                    setGameUi(ui)
                     screen = Screen.Game
                     status = null
                 }
@@ -322,7 +331,7 @@ class GameSessionViewModel(app: Application) : AndroidViewModel(app) {
                     message.optString("game"),
                     message.getJSONObject("state"),
                 )
-                if (ui != null) gameUi = ui
+                if (ui != null) setGameUi(ui)
             }
             Msg.LOBBY -> {
                 gameUi = null
