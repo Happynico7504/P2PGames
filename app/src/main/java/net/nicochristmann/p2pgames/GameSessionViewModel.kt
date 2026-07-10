@@ -69,7 +69,7 @@ class GameSessionViewModel(app: Application) : AndroidViewModel(app) {
     private val haptics = GameHaptics(app)
 
     /** Updates the rendered state and plays the matching haptic feedback. */
-    private fun setGameUi(newUi: GameUi?) {
+    private fun updateGameUi(newUi: GameUi?) {
         val old = gameUi
         gameUi = newUi
         if (newUi != null) haptics.onStateChange(old, newUi, myPlayerId)
@@ -209,7 +209,7 @@ class GameSessionViewModel(app: Application) : AndroidViewModel(app) {
         players.forEach { p ->
             if (p.id != 0) host?.send(p.id, Msg.start(game.gameId, game.toJsonFor(p.id)))
         }
-        setGameUi(GameUiParser.parse(game.gameId, game.toJsonFor(0)))
+        updateGameUi(GameUiParser.parse(game.gameId, game.toJsonFor(0)))
         screen = Screen.Game
         status = null
     }
@@ -220,7 +220,7 @@ class GameSessionViewModel(app: Application) : AndroidViewModel(app) {
         players.forEach { p ->
             if (p.id != 0) host?.send(p.id, Msg.state(game.gameId, game.toJsonFor(p.id)))
         }
-        setGameUi(GameUiParser.parse(game.gameId, game.toJsonFor(0)))
+        updateGameUi(GameUiParser.parse(game.gameId, game.toJsonFor(0)))
     }
 
     /** Host: ends the current game for everyone and returns to the lobby. */
@@ -321,7 +321,7 @@ class GameSessionViewModel(app: Application) : AndroidViewModel(app) {
                     message.getJSONObject("state"),
                 )
                 if (ui != null) {
-                    setGameUi(ui)
+                    updateGameUi(ui)
                     screen = Screen.Game
                     status = null
                 }
@@ -331,7 +331,7 @@ class GameSessionViewModel(app: Application) : AndroidViewModel(app) {
                     message.optString("game"),
                     message.getJSONObject("state"),
                 )
-                if (ui != null) setGameUi(ui)
+                if (ui != null) updateGameUi(ui)
             }
             Msg.LOBBY -> {
                 gameUi = null
